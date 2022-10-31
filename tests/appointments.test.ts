@@ -8,7 +8,7 @@ describe("Registration tests", () => {
     beforeAll(async () => {
         dotenv.config();
         await mongoose.connect(process.env.MONGO_URL!, {
-            dbName: process.env.MONGO_DB,
+            dbName: process.env.MONGO_TEST_DB,
         });
     });
 

@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
-import { IUser } from "../utils/interfaces";
+
+export interface IUser {
+    email: string;
+    reg_token: string;
+    photo_avatar: string;
+    phone: string;
+    name: string;
+    type: "user";
+    appointments: mongoose.Schema.Types.ObjectId[];
+}
 
 const schema = new mongoose.Schema<IUser>({
     email: { type: "String", required: true, unique: true },

@@ -16,15 +16,12 @@ const postSchema: JSONSchemaType<IUserSignUp> = {
     required: ["email", "name", "phone"],
 };
 
-router.post("/", validateBody(postSchema), async (req, res) => {
+router.post("/", validateBody(postSchema), async (req, res, next) => {
     try {
         const doctor = await DoctorService.signUp(req.body);
         res.json({ success: true, user: doctor });
     } catch (e: any) {
-        res.status(400).json({
-            success: false,
-            errors: [{ message: e.message }],
-        });
+        next(e);
     }
 });
 

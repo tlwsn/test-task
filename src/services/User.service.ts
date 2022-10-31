@@ -1,6 +1,8 @@
 import User from "../models/User";
 import crypto from "crypto";
-import { IAppointment, IUserSignUp } from "../utils/interfaces";
+import { IUserSignUp } from "../utils/interfaces";
+import { IAppointment } from "../models/Appointment";
+import HttpException from "../utils/HttpException";
 
 class UserService {
     async signUp(data: IUserSignUp) {
@@ -26,7 +28,7 @@ class UserService {
         const user = await User.findOne({ _id: id }).populate<{
             appointments: IAppointment[];
         }>("appointments");
-        if (!user) throw "User not found";
+        if (!user) throw new HttpException(404, "User not found");
 
         return user;
     }

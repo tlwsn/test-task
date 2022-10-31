@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
-import { IDoctor } from "../utils/interfaces";
+
+export interface IDoctor {
+    email: string;
+    reg_token: string;
+    photo_avatar: string;
+    phone: string;
+    name: string;
+    type: "doc";
+    spec: "therapist";
+    free: boolean;
+    appointments_accepted: mongoose.Schema.Types.ObjectId[];
+}
 
 const schema = new mongoose.Schema<IDoctor>({
     email: { type: "String", required: true, unique: true },

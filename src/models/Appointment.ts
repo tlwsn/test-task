@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
-import { IAppointment } from "../utils/interfaces";
+
+export interface IAppointment {
+    date: Date;
+    user: mongoose.Schema.Types.ObjectId;
+    doctor: mongoose.Schema.Types.ObjectId;
+    active: boolean;
+}
 
 const schema = new mongoose.Schema<IAppointment>({
     date: { type: "Date", required: true },

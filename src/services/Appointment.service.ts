@@ -2,23 +2,26 @@ import mongoose from "mongoose";
 import Appointment from "../models/Appointment";
 import Doctor from "../models/Doctor";
 import User from "../models/User";
-import { IUser, IDoctor } from "../utils/interfaces";
+import { IUser } from "../models/User";
+import { IDoctor } from "../models/Doctor";
 import DoctorService from "./Doctor.service";
+import { scheduleNotifications } from "../utils/schedule";
+import HttpException from "../utils/HttpException";
 
 class AppointmentService {
     async insert(data: { id_user: string; id_doc: string; date: number }) {
         const date = new Date(data.date);
-        if (date <= new Date()) throw new Error("Incorrect date");
+        if (date <= new Date()) throw new HttpException(400, "Incorrect date");
 
         const user = await User.findOne({ _id: data.id_user });
-        if (!user) throw new Error("User not found");
+        if (!user) throw new HttpException(404, "User not found");
         const doc = await DoctorService.findOne(data.id_doc);
-        if (!doc) throw new Error("Doctor not found");
+        if (!doc) throw new HttpException(404, "Doctor not found");
 
         if (
             doc.appointments_accepted.filter((e) => e.active == true).length > 3
         )
-            throw new Error("Doctor is not free");
+            throw new HttpException(422, "Doctor is not free");
 
         const appointment = new Appointment({
             date,
@@ -31,14 +34,14 @@ class AppointmentService {
 
     async delete(id: string) {
         const appointment = await Appointment.findOne({ _id: id });
-        if (!appointment) throw new Error("Appointment not found");
+        if (!appointment) throw new HttpException(404, "Appointment not found");
 
         await Appointment.deleteOne({ _id: id });
     }
 
     async update(data: { id: string; active: boolean }) {
         const appointment = await Appointment.findOne({ _id: data.id });
-        if (!appointment) throw new Error("Appointment not found");
+        if (!appointment) throw new HttpException(404, "Appointment not found");
 
         await Appointment.updateOne(
             { _id: data.id },
@@ -47,13 +50,15 @@ class AppointmentService {
     }
 
     async docUpdate(data: { id: string; active: boolean; id_doc: string }) {
-        const appointment = await Appointment.findOne({ _id: data.id });
-        if (!appointment) throw new Error("Appointment not found");
+        const appointment = await this.findOne(data.id);
+        if (!appointment) throw new HttpException(404, "Appointment not found");
 
-        if (appointment.doctor.toString() != data.id_doc)
-            throw new Error("Cannot update this appointment");
+        if (appointment.doctor._id.toString() != data.id_doc)
+            throw new HttpException(403, "Cannot update this appointment");
 
         if (!data.active) return Appointment.deleteOne({ _id: data.id });
+
+        scheduleNotifications(appointment);
 
         await Appointment.updateOne(
             { _id: data.id },
@@ -75,9 +80,13 @@ class AppointmentService {
 
     async findOne(id: string) {
         const appointment = await Appointment.findOne({ _id: id })
-            .populate<IUser>("user")
-            .populate<IDoctor>("doctor");
-        if (!appointment) throw "Appointment not found";
+            .populate<{ user: IUser & { _id: mongoose.Types.ObjectId } }>(
+                "user"
+            )
+            .populate<{ doctor: IDoctor & { _id: mongoose.Types.ObjectId } }>(
+                "doctor"
+            );
+        if (!appointment) throw new HttpException(404, "Appointment not found");
 
         return appointment;
     }
@@ -86,8 +95,12 @@ class AppointmentService {
         const appointments = await Appointment.find(
             activeOnly ? { active: true } : {}
         )
-            .populate<{ user: IUser }>("user")
-            .populate<{ doctor: IDoctor }>("doctor");
+            .populate<{ user: IUser & { _id: mongoose.Types.ObjectId } }>(
+                "user"
+            )
+            .populate<{ doctor: IDoctor & { _id: mongoose.Types.ObjectId } }>(
+                "doctor"
+            );
         return appointments;
     }
 }

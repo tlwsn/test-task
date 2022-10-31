@@ -19,15 +19,12 @@ const postSchema: JSONSchemaType<{
     required: ["id_doc", "id_user", "date"],
 };
 
-router.post("/", validateBody(postSchema), async (req, res) => {
+router.post("/", validateBody(postSchema), async (req, res, next) => {
     try {
         const appointment = await AppointmentService.insert(req.body);
         res.json({ success: true, appointment });
     } catch (e: any) {
-        res.status(400).json({
-            success: false,
-            errors: [{ message: e.message }],
-        });
+        next(e);
     }
 });
 
@@ -45,15 +42,12 @@ const docUpdate: JSONSchemaType<{
     required: ["active", "id", "id_doc"],
 };
 
-router.put("/docUpdate", validateBody(docUpdate), async (req, res) => {
+router.put("/docUpdate", validateBody(docUpdate), async (req, res, next) => {
     try {
         await AppointmentService.docUpdate(req.body);
         res.json({ success: true });
     } catch (e: any) {
-        res.status(400).json({
-            success: false,
-            errors: [{ message: e.message }],
-        });
+        next(e);
     }
 });
 

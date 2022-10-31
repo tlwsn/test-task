@@ -1,8 +1,10 @@
 import crypto from "crypto";
 import { Types, Document } from "mongoose";
 import Doctor from "../models/Doctor";
-import { IAppointment, IDoctor, IUserSignUp } from "../utils/interfaces";
-
+import { IUserSignUp } from "../utils/interfaces";
+import { IAppointment } from "../models/Appointment";
+import { IDoctor } from "../models/Doctor";
+import HttpException from "../utils/HttpException";
 class DoctorService {
     async signUp(data: IUserSignUp) {
         const reg_token = crypto
@@ -27,7 +29,7 @@ class DoctorService {
         const doctor = await Doctor.findOne({ _id: id }).populate<{
             appointments_accepted: IAppointment[];
         }>("appointments_accepted");
-        if (!doctor) throw "Doctor not found";
+        if (!doctor) throw new HttpException(404, "Doctor not found");
 
         return doctor;
     }
